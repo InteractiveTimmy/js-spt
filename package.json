@@ -1,0 +1,28 @@
+{
+  "name": "js-spt",
+  "version": "0.1.0",
+  "description": "JavaScript Structure Performance Test",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./examples/index.js",
+    "build": "rollup -c",
+    "watch": "rollup -c --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/InteractiveTimmy/js-spt.git"
+  },
+  "author": "InteractiveTimmy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/InteractiveTimmy/js-spt/issues"
+  },
+  "homepage": "https://github.com/InteractiveTimmy/js-spt#readme",
+  "devDependencies": {
+    "rollup": "^0.67.4"
+  }
+}
