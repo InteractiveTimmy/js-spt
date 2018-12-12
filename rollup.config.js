@@ -3,7 +3,7 @@ export default {
   output: [
     {
       format: 'umd',
-      name: 'ECS',
+      name: 'SPT',
       file: 'build/spt.js',
       indent: '\t'
     },

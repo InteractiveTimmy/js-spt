@@ -2,9 +2,63 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>title</title>
+    <title>JavaScript Structure Performance Test</title>
+    <script type='text/javascript' charset='UTF-8' src="../build/spt.js"></script>
+    <script type='text/javascript' charset='UTF-8' src="index.js"></script>
   </head>
   <body>
-    <h1>TODO</h1>
+    <h1>JavaScript Structure Performance Test</h1>
+    <p>JavaScript Structure Performance Test is designed to validate which data structure takes the least amount of time to handle a set of operations. Each data structure, upon construction, creates a Float32Array of three random 32-bit floating point numbers between 0 and 1. Each data structure also contains an operate( ) method which mutates the data by assigning new random values to each of the three Float32Array values.</p>
+    <ul>
+      <li>The Javascript Array uses a Create( ) method to generate and return a simple Float32Array</li>
+      <li>The Javascript Object uses a Create( ) method to generate and return an object with the structure { data: Float32Array }</li>
+      <li>The Javascript Class uses a standard Class.constructor( ) method to return a newly generated JavaScript Class Object with the structure { data: Float32Array }</li>
+    </ul>
+    <p>Note: This application can also be ran via NodeJS / NPM from the project's root directory. See README.md for more information</p>
+    <h3>Testing Form</h3>
+    <form>
+      # of Trials: <input id="elm-trials" type="number" name="trials" min="1" max="1000" value="20"><br /><br />
+      # of Operations: <input id="elm-operations" type="number" name="operations" min="1" max="1000000000" value="1000000"><br /><br />
+
+      Structures to Test: <br />
+      <input id="elm-array" type="checkbox" name="StructArray" value="array"> Array<br />
+      <input id="elm-object" type="checkbox" name="StructObject" value="object"> Object<br />
+      <input id="elm-class" type="checkbox" name="StructClass" value="class"> Class<br />
+      <br />
+      <button type="button" value="start" onclick="handleStart( )">Start</button>
+    </form>
+
+    <div id="output"></div>
+
+    <script type='text/javascript' charset='UTF-8'>
+      function handleStart( ) {
+        trials.length = 0;
+
+        let elmOutput = document.getElementById( 'output' );
+
+        while ( elmOutput.firstChild )
+        { elmOutput.removeChild( elmOutput.firstChild ); }
+
+        controls.operations = document.getElementById( 'elm-operations' ).value;
+        controls.trials = document.getElementById( 'elm-trials' ).value;
+
+        if ( document.getElementById( 'elm-array' ).checked )
+        { trials.push( new SPT.Trial( 'array', SPT.StructArray, 'array' ) ); }
+        if ( document.getElementById( 'elm-object' ).checked )
+        { trials.push( new SPT.Trial( 'object', SPT.StructObject, 'object' ) ); }
+        if ( document.getElementById( 'elm-class' ).checked )
+        { trials.push( new SPT.Trial( 'class', SPT.StructClass, 'class' ) ); }
+
+        start( );
+        
+        let elm;
+        
+        trials.forEach( trial => {
+          elm = document.createElement( 'p' );
+          elm.innerHTML = `${trial.name} had an average trial delta of ${trial.mean}ms`;
+          elmOutput.appendChild( elm );
+        } );
+      }
+    </script>
   </body>
 </html>
