@@ -1,58 +1,48 @@
 'use strict';
 
-let SPT;
+let mySPT;
 let instanceType;
-let target;
 
-try
-{
-  SPT = window.SPT;
-  instanceType = 'browser';
-}
-catch
-{
-  SPT = require( '../build/spt.js' );
-  instanceType = 'node'
-}
+try { mySPT = window.SPT; instanceType = 'browser'; }
+catch { }
 
-console.log( `${instanceType} instance detected` );
+try { mySPT = require( './spt.js' ); instanceType = 'node'; }
+catch { }
 
-let controls = { };
-let trials = [ ];
+try { importScripts( 'spt.js' ); mySPT = SPT; instanceType = 'webworker';  }
+catch { }
 
-function init ( )
-{
-  controls.operations = 1000000;
-  controls.trials = 50;
+function init ( operations, trialCount, iterations )
+{ return new Promise( ( resolve, reject ) => {
+  const controls = {
+    operations: operations,
+    trials: trialCount,
+    iterations: iterations
+  };
 
-  let types = [
-    [ 'class', SPT.StructClass, 'class' ],
-    [ 'object', SPT.StructObject, 'object' ],
-    [ 'array', SPT.StructArray, 'array' ]
+  const trials = [ ];
+
+  const types = [
+    [ mySPT.StructClass, 'class' ],
+    [ mySPT.StructObject, 'object' ],
+    [ mySPT.StructArray, 'array' ]
   ];
 
   let index;
 
-  for ( let i = 0; i < 100; i++ )
+  for ( let i = 0; i < iterations + 1; i++ )
   {
     index = Math.floor( Math.random( ) * 3 );
-    trials.push( new SPT.Trial( ...types[index] ) );
+    trials.push( new mySPT.Trial( `trial ${i}`, types[index][0], types[index][1] ) );
   }
 
-  /*
-  trials.push( ...[
-    new SPT.Trial( 'class', SPT.StructClass, 'class' ),
-    new SPT.Trial( 'object', SPT.StructObject, 'object' ),
-    new SPT.Trial( 'array', SPT.StructArray, 'array' )
-  ] );
-  */
+  resolve( { controls: controls, trials: trials } )
+} ); }
 
-  start( );
-}
-
-function start ( )
-{
-  trials.forEach( trial => {
+function run ( controls, trials, step )
+{ return new Promise( ( resolve, reject ) => {
+  
+  trials.forEach( ( trial, i ) => {
     for ( let x = 0; x < controls.trials; x++ )
     {
       trial.begin = Date.now( );
@@ -66,34 +56,53 @@ function start ( )
       trial.data.push( trial.delta );
     }
 
-    trial.data.forEach( item => {
-      trial.mean += item;
+    trial.data.forEach( ( delta, i ) => {
+      trial.mean += delta;
     } );
 
     trial.mean /= trial.data.length;
 
-    console.log( `${trial.name} had an average trial delta of ${trial.mean}ms` );
+    if ( i !== 0 && step instanceof Function ) { step( trial ); }
   } );
 
   let results = { };
 
-  trials.forEach( trial => {
-    if ( !results[trial.name] )
+  trials.forEach( ( trial, i ) => {
+    if ( !results[trial.type] )
     {
-      results[trial.name] = {
+      results[trial.type] = {
         total: 0,
         count: 0
       };
     }
 
-    results[trial.name].total += trial.mean;
-    results[trial.name].count++;
+    if ( i !== 0 )
+    {
+      results[trial.type].total += trial.mean;
+      results[trial.type].count++;
+    }
   } );
 
-  Object.keys( results ).forEach( item => {
-    console.log( `final results for ${item} had an average delta of ${results[item].total / results[item].count}ms` );
-  } );
+  resolve( results );
+} ); }
+
+if ( instanceType == 'node' )
+{
+  let begin, end, delta;
+
+  init( 1000000, 20, 100 )
+    .then( ( r ) => {
+      begin = Date.now( );
+      return run( r.controls, r.trials, ( trial ) => {
+        console.log( `${trial.name} - ${trial.type} completed a trial with a delta time of ${trial.mean}ms` );
+      } );
+    } )
+    .then( ( r ) => {
+      end = date.now( );
+      delta = end - begin;
+      console.log( `total process time - ${delta}ms` );
+      Object.keys( r ).forEach( ( key, i ) => {
+        console.log( `${key} performed ${r[key].count} trial[s] with an average delta time of ${r[key].total / r[key].count}ms` );
+      } );
+    } );
 }
-
-if ( instanceType === 'node' )
-{ init( ); }

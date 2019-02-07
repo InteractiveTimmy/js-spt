@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>JavaScript Structure Performance Test</title>
-    <script type='text/javascript' charset='UTF-8' src="../build/spt.js"></script>
+    <script type='text/javascript' charset='UTF-8' src="spt.js"></script>
     <script type='text/javascript' charset='UTF-8' src="index.js"></script>
   </head>
   <body>
@@ -19,45 +19,118 @@
     <form>
       # of Trials: <input id="elm-trials" type="number" name="trials" min="1" max="1000" value="20"><br /><br />
       # of Operations: <input id="elm-operations" type="number" name="operations" min="1" max="1000000000" value="1000000"><br /><br />
+      # of Iterations: <input id="elm-iterations" type="number" name="iterations" min="1" max="1000000" value="100"><br /><br />
+      # of WebWorkers: <input id="elm-webworkers" type="number" name="webworkers" min="0" max="64" value="0"><br /><br />
 
-      Structures to Test: <br />
-      <input id="elm-array" type="checkbox" name="StructArray" value="array"> Array<br />
-      <input id="elm-object" type="checkbox" name="StructObject" value="object"> Object<br />
-      <input id="elm-class" type="checkbox" name="StructClass" value="class"> Class<br />
-      <br />
       <button type="button" value="start" onclick="handleStart( )">Start</button>
     </form>
+
+    <p>Note: After pressing "start", your browser may be unresponsive until the test has completed. To view the progress of the process, be sure to open your debug console in your browser.</p>
 
     <div id="output"></div>
 
     <script type='text/javascript' charset='UTF-8'>
       function handleStart( ) {
-        trials.length = 0;
+
+        let begin, end, delta;
 
         let elmOutput = document.getElementById( 'output' );
+        let elm;
 
         while ( elmOutput.firstChild )
         { elmOutput.removeChild( elmOutput.firstChild ); }
 
-        controls.operations = document.getElementById( 'elm-operations' ).value;
-        controls.trials = document.getElementById( 'elm-trials' ).value;
+        let myWorkers = [ ];
 
-        if ( document.getElementById( 'elm-array' ).checked )
-        { trials.push( new SPT.Trial( 'array', SPT.StructArray, 'array' ) ); }
-        if ( document.getElementById( 'elm-object' ).checked )
-        { trials.push( new SPT.Trial( 'object', SPT.StructObject, 'object' ) ); }
-        if ( document.getElementById( 'elm-class' ).checked )
-        { trials.push( new SPT.Trial( 'class', SPT.StructClass, 'class' ) ); }
+        for ( let i = 0; i < parseInt( document.getElementById( 'elm-webworkers' ).value, 10 ); i++ )
+        { myWorkers.push( new Worker( 'worker.js' ) ); }
 
-        start( );
-        
-        let elm;
-        
-        trials.forEach( trial => {
-          elm = document.createElement( 'p' );
-          elm.innerHTML = `${trial.name} had an average trial delta of ${trial.mean}ms`;
-          elmOutput.appendChild( elm );
-        } );
+        if ( myWorkers.length === 0 )
+        {
+          init(
+            parseInt( document.getElementById( 'elm-operations' ).value, 10 ),
+            parseInt( document.getElementById( 'elm-trials' ).value, 10 ),
+            parseInt( document.getElementById( 'elm-iterations' ).value, 10 )
+          )
+          .then( ( r ) => {
+            begin = Date.now( );
+
+            return run( r.controls, r.trials, ( trial ) => {
+              console.log( `${trial.name} - ${trial.type} completed a trial with a delta time of ${trial.mean}ms` );
+            } );
+          } )
+          .then( ( r ) => {
+            
+            end = Date.now( );
+            delta = end - begin;
+            console.log( `total process time - ${delta}ms` );
+            elm = document.createElement( 'p' );
+            elm.innerHTML = `total process time - ${delta}ms`;
+            elmOutput.appendChild( elm );
+
+            Object.keys( r ).forEach( ( key, i ) => {
+              elm = document.createElement( 'p' );
+              elm.innerHTML = `${key} performed ${r[key].count} trial[s] with an average delta time of ${r[key].total / r[key].count}ms`;
+              elmOutput.appendChild( elm );
+            } );
+          } );
+        }
+        else
+        {
+          const workerify = new Promise( ( resolve, reject ) => {
+            begin = Date.now( );
+
+            let doneWorkers = 0;
+            let workerResults = { };
+
+            myWorkers.forEach( ( worker, i ) => {
+              worker.onmessage = ( e ) => {
+                Object.keys( e.data ).forEach( ( key, i ) => {
+                  if ( !workerResults[key] )
+                  {
+                    workerResults[key] = {
+                      total: 0,
+                      count: 0
+                    };
+                  }
+
+                  workerResults[key].total += e.data[key].total;
+                  workerResults[key].count += e.data[key].count;
+                } );
+
+                doneWorkers++;
+
+                if ( doneWorkers == myWorkers.length )
+                { resolve( workerResults ); }
+              };
+
+              worker.postMessage( {
+                operations: parseInt( document.getElementById( 'elm-operations' ).value, 10 ),
+                trials: parseInt( document.getElementById( 'elm-trials' ).value, 10 ),
+                iterations: parseInt( document.getElementById( 'elm-iterations' ).value, 10 ) / myWorkers.length
+              } );
+            } );
+          } )
+            .then( ( r ) => {
+              myWorkers.forEach( worker => {
+                worker.terminate( );
+              } );
+
+              end = Date.now( );
+              delta = end - begin;
+              console.log( `total process time - ${delta}ms` );
+              elm = document.createElement( 'p' );
+              elm.innerHTML = `total process time - ${delta}ms`;
+              elmOutput.appendChild( elm );
+
+              Object.keys( r ).forEach( ( key, i ) => {
+                console.log( `${key} performed ${r[key].count} trial[s] with an average delta time of ${r[key].total / r[key].count}ms` );
+                elm = document.createElement( 'p' );
+                elm.innerHTML = `${key} performed ${r[key].count} trial[s] with an average delta time of ${r[key].total / r[key].count}ms`;
+                elmOutput.appendChild( elm );
+              } );
+            } );
+        }
       }
     </script>
   </body>
