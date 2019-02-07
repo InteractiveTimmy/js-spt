@@ -8,6 +8,12 @@ export default {
       indent: '\t'
     },
     {
+      format: 'umd',
+      name: 'SPT',
+      file: 'examples/spt.js',
+      indent: '\t'
+    },
+    {
       format: 'es',
       file: 'build/spt.module.js',
       indent: '\t'
