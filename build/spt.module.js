@@ -54,7 +54,7 @@ class Trial
   constructor ( name, struct, type )
   {
     this.name = name;
-    this.operate = ( ) => { console.log( 'hello' ); };
+    this.type = type;
     
     this.begin = null;
     this.end = null;
@@ -78,6 +78,11 @@ class Trial
     {
       this.struct = struct.create( );
       this.operate = ( ) => { struct.operate( this.struct ); };
+    }
+    else
+    {
+      this.struct = null;
+      this.operate = ( ) => { };
     }
   }
 }

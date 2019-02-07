@@ -3,7 +3,7 @@ class Trial
   constructor ( name, struct, type )
   {
     this.name = name;
-    this.operate = ( ) => { console.log( 'hello' ); }
+    this.type = type;
     
     this.begin = null;
     this.end = null;
@@ -16,17 +16,22 @@ class Trial
     if ( type === 'class' )
     {
       this.struct = new struct( );
-      this.operate = ( ) => { this.struct.operate( ); }
+      this.operate = ( ) => { this.struct.operate( ); };
     }
     else if ( type === 'object' )
     {
       this.struct = struct.create( );
-      this.operate = ( ) => { struct.operate( this.struct ); }
+      this.operate = ( ) => { struct.operate( this.struct ); };
     }
     else if ( type === 'array' )
     {
       this.struct = struct.create( );
-      this.operate = ( ) => { struct.operate( this.struct ); }
+      this.operate = ( ) => { struct.operate( this.struct ); };
+    }
+    else
+    {
+      this.struct = null;
+      this.operate = ( ) => { };
     }
   }
 }
