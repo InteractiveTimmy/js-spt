@@ -9,6 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./examples/index.js",
+    "start-browser": "http-server ./examples -o",
     "build": "rollup -c",
     "watch": "rollup -c --watch"
   },
@@ -24,5 +25,8 @@
   "homepage": "https://github.com/InteractiveTimmy/js-spt#readme",
   "devDependencies": {
     "rollup": "^0.67.4"
+  },
+  "dependencies": {
+    "http-server": "^0.11.1"
   }
 }
